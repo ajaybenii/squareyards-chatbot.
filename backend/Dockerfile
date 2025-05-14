@@ -1,5 +1,5 @@
-# Use the latest Python image
-FROM python:3.12
+# Use a more complete Python image
+FROM python:3.11
 
 # Set workdir
 WORKDIR /app
