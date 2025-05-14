@@ -6,9 +6,9 @@ WORKDIR /app
 
 # Install system dependencies including Python, TLS, DNS, certificates, etc.
 RUN apt-get update && apt-get install -y \
-    python3.11 \
-    python3.11-venv \
-    python3.11-dev \
+    python3 \
+    python3-venv \
+    python3-dev \
     python3-pip \
     gcc \
     libssl-dev \
@@ -20,9 +20,9 @@ RUN apt-get update && apt-get install -y \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Python 3.11 as the default python3
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
+# Set Python 3 as the default python3 (this is Python 3.12 in Ubuntu 24.04)
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3 1
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 
 # Install pip
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && rm get-pip.py
@@ -31,9 +31,8 @@ RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.p
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire app and CA certificate
+# Copy the entire app
 COPY . .
-COPY isrgrootx1.pem /app/isrgrootx1.pem
 
 # Expose port used by uvicorn
 EXPOSE 10000
