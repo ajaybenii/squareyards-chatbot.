@@ -23,8 +23,8 @@ MONGODB_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 print(f"MONGODB_URI: {MONGODB_URI}")  # Debug log
 
 try:
-    # client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)  # 5-second timeout
-    client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000, tls=True, tlsAllowInvalidCertificates=False)
+    client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)  # 5-second timeout
+    # client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000, tls=True, tlsAllowInvalidCertificates=False)
     # Test the connection
     client.server_info()  # This will raise an error if the connection fails
     print("Connected databases:", client.list_database_names())
