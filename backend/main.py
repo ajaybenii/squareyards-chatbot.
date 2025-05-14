@@ -28,17 +28,23 @@ app.add_middleware(
 MONGODB_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 print(f"MONGODB_URI: {MONGODB_URI}")  # Debug log
 
+# MongoDB Connection
+MONGODB_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+print(f"MONGODB_URI: {MONGODB_URI}")  # Debug log
+
 try:
     client = MongoClient(
         MONGODB_URI,
         server_api=ServerApi("1"),
         tls=True,
-        tlsAllowInvalidCertificates=False,
-        connectTimeoutMS=30000,  # Increase connection timeout
-        socketTimeoutMS=30000,   # Increase socket timeout
-        maxPoolSize=10,          # Limit connection pool size
-        minPoolSize=1,           # Ensure at least one connection
-        maxIdleTimeMS=10000      # Close idle connections after 10 seconds
+        tlsAllowInvalidCertificates=True,  # Temporarily disable certificate validation
+        connectTimeoutMS=30000,
+        socketTimeoutMS=30000,
+        maxPoolSize=5,
+        minPoolSize=1,
+        maxIdleTimeMS=10000,
+        retryWrites=True,
+        retryReads=True
     )
     # Test the connection
     client.server_info()  # This will raise an error if the connection fails
@@ -48,6 +54,7 @@ try:
 except Exception as e:
     print("MongoDB connection failed:", str(e))
     raise Exception(f"MongoDB connection failed: {str(e)}")
+
 # Pydantic model for request validation
 class PropertyListing(BaseModel):
     userType: str
