@@ -42,6 +42,11 @@ class PropertyListing(BaseModel):
     name: str
     number: str
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.post("/submit")
 async def submit_listing(listing: PropertyListing):
     try:
