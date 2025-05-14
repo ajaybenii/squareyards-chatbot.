@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SquareYards Property Listing Chatbot</title>
+    <!-- Import Poppins font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+        #chatbot-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #005DAA;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+        #chatbot-icon::before {
+            content: '💬';
+            font-size: 24px;
+            color: white;
+        }
+        #chatbot-window {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            width: 350px;
+            max-height: 500px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+        }
+        @media (max-width: 600px) {
+            #chatbot-window {
+                width: 100%;
+                max-height: 100%;
+                bottom: 0;
+                right: 0;
+                border-radius: 0;
+            }
+        }
+        .chatbot-header {
+            background-color: #005DAA;
+            color: white;
+            padding: 10px 15px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            overflow: visible; /* Ensure close button is not cut off */
+        }
+        .chatbot-header h3 {
+            margin: 0;
+            font-size: 16px;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .chatbot-header .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px; /* Increased size for better visibility */
+            font-weight: bold; /* Make it bolder */
+            cursor: pointer;
+            padding: 5px 10px; /* Increased padding for click area */
+            line-height: 1;
+            transition: color 0.2s ease; /* Smooth hover transition */
+        }
+        .chatbot-header .close-btn:hover {
+            color: #f0f0f0;
+        }
+        .chatbot-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            max-height: 400px;
+        }
+        .chatbot-body::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chatbot-body::-webkit-scrollbar-thumb {
+            background-color: #005DAA;
+            border-radius: 4px;
+        }
+        .chatbot-body::-webkit-scrollbar-track {
+            background-color: #f1f1f1;
+        }
+        .message {
+            margin: 10px 0;
+            max-width: 80%;
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            .message {
+                font-size: 12px;
+            }
+        }
+        .bot-message {
+            background-color: #e6f0fa;
+            padding: 10px;
+            border-radius: 10px 10px 10px 0;
+        }
+        .user-message {
+            background-color: #1b8eec;
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px 10px 0 10px;
+            margin-left: auto;
+        }
+        .selected-option {
+            background-color: #1b8eec;
+            font-weight: bold;
+            border: 1px solid #1b8eec;
+            padding: 8px 12px;
+        }
+        .reminder-message {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 8px;
+            border-radius: 10px 10px 10px 0;
+            font-style: italic;
+        }
+        .chatbot-input {
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            background-color: white;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        .chatbot-input input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            .chatbot-input input {
+                font-size: 12px;
+            }
+        }
+        .chatbot-input .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .chatbot-input button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #1b8eec;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: opacity 0.2s ease;
+        }
+        @media (max-width: 600px) {
+            .chatbot-input button {
+                font-size: 12px;
+            }
+        }
+        .chatbot-input button.secondary {
+            background-color: #bec5cc; /* Same background as primary */
+            color: #000; /* Black text for better visibility */
+        }
+        .chatbot-input button:hover {
+            opacity: 0.9;
+        }
+        .chatbot-input button.secondary:hover {
+            opacity: 0.9;
+        }
+        .error-message {
+            color: red;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .final-message-container {
+            display: flex;
+            align-items: center;
+            background-color: #e6f7fa;
+            border: 1px solid #b3e5fc;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            color: #333;
+        }
+        @media (max-width: 600px) {
+            .final-message-container {
+                font-size: 12px;
+            }
+        }
+        .final-message-container img.agent-image {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .final-message-text {
+            flex: 1;
+        }
+        .online-status {
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #2e7d32;
+            margin-bottom: 5px;
+        }
+        @media (max-width: 600px) {
+            .online-status {
+                font-size: 10px;
+            }
+        }
+        .online-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #2e7d32;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chatbot-icon" role="button" aria-label="Open chatbot"></div>
+    <div id="chatbot-window">
+        <div class="chatbot-header">
+            <h3>Property Listing Assistant</h3>
+            <button class="close-btn" aria-label="Close chatbot">×</button>
+        </div>
+        <div class="chatbot-body" id="chatbot-body"></div>
+        <div class="chatbot-input" id="chatbot-input"></div>
+    </div>
+
+    <script>
+        const state = {
+            step: 0,
+            data: {
+                userType: '',
+                listingType: '',
+                city: '',
+                name: '',
+                number: ''
+            },
+            hasStarted: false,
+            reminderTimeout: null,
+            reminderShown: false
+        };
+
+        const chatbotIcon = document.getElementById('chatbot-icon');
+        const chatbotWindow = document.getElementById('chatbot-window');
+        const chatbotBody = document.getElementById('chatbot-body');
+        const chatbotInput = document.getElementById('chatbot-input');
+        const closeBtn = document.querySelector('.close-btn');
+
+        chatbotIcon.addEventListener('click', () => {
+            const isWindowOpen = chatbotWindow.style.display === 'block';
+            if (isWindowOpen) {
+                chatbotWindow.style.display = 'none';
+                clearReminderTimeout();
+            } else {
+                chatbotWindow.style.display = 'block';
+                if (!state.hasStarted) {
+                    startChat();
+                    state.hasStarted = true;
+                }
+            }
+        });
+
+        closeBtn.addEventListener('click', () => {
+            chatbotWindow.style.display = 'none';
+            clearReminderTimeout();
+        });
+
+        function startChat() {
+            addBotMessage('👋 Hi! Let’s list your property on SquareYards. 🚀');
+            setTimeout(() => showStep(0), 500);
+        }
+
+        const steps = [
+            {
+                message: '👋 Welcome to SquareYards! Are you the property owner or an agent? 🧑‍💼',
+                input: 'buttons',
+                options: ['Owner', 'Agent'],
+                field: 'userType',
+                reminder: '⏳ Are you still there? Please choose if you’re an owner or agent.'
+            },
+            {
+                message: '🏠 Is the property for sale or rent? 💸',
+                input: 'buttons',
+                options: ['Sale', 'Rent'],
+                field: 'listingType',
+                reminder: '⏳ Are you still there? Please select if the property is for sale or rent.'
+            },
+            {
+                message: '📍 Which city is your property in? 🌆',
+                input: 'text',
+                placeholder: 'Enter city (e.g., Mumbai)',
+                field: 'city',
+                validate: (value) => value.trim().length > 0 ? '' : 'Please enter a valid city.',
+                reminder: '⏳ Are you still there? Please tell your city.'
+            },
+            {
+                message: '✨ To get your property listed quickly and hassle-free, our expert agent is ready to assist you personally! Please share your name to proceed. 📝',
+                input: 'text',
+                placeholder: 'Enter your full name',
+                field: 'name',
+                validate: (value) => value.trim().length > 0 ? '' : 'Please enter a valid name.',
+                reminder: '⏳ Are you still there? Please share your name.'
+            },
+            {
+                message: '📞 Please enter your 10-digit phone number. Your data is secure, and our agent will contact you soon. 🔒',
+                input: 'text',
+                placeholder: 'Enter 10-digit phone number',
+                field: 'number',
+                validate: (value) => /^[0-9]{10}$/.test(value) ? '' : 'Please enter a valid 10-digit phone number.',
+                reminder: '⏳ Are you still there? Please enter your phone number.'
+            }
+        ];
+
+        function showStep(stepIndex) {
+            state.step = stepIndex;
+            state.reminderShown = false;
+            const step = steps[stepIndex];
+            addBotMessage(step.message);
+            chatbotInput.innerHTML = '';
+
+            clearReminderTimeout();
+            state.reminderTimeout = setTimeout(() => {
+                if (!state.reminderShown) {
+                    addBotMessage(step.reminder, 'reminder-message');
+                    state.reminderShown = true;
+                }
+            }, 7000);
+
+            if (step.input === 'buttons') {
+                const buttonsDiv = document.createElement('div');
+                buttonsDiv.className = 'buttons';
+                step.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.setAttribute('aria-label', `Select ${option}`);
+                    button.addEventListener('click', () => handleButtonClick(option, step.field));
+                    if (option === step.options[1]) button.className = 'secondary';
+                    buttonsDiv.appendChild(button);
+                });
+                chatbotInput.appendChild(buttonsDiv);
+            } else if (step.input === 'text') {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = step.placeholder;
+                input.setAttribute('aria-label', step.placeholder);
+                chatbotInput.appendChild(input);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                chatbotInput.appendChild(errorDiv);
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        handleTextInput(input.value, step.field, step.validate, errorDiv);
+                    }
+                });
+            }
+        }
+
+        function clearReminderTimeout() {
+            if (state.reminderTimeout) {
+                clearTimeout(state.reminderTimeout);
+                state.reminderTimeout = null;
+            }
+        }
+
+        function handleButtonClick(value, field) {
+            clearReminderTimeout();
+            state.data[field] = value;
+            addUserMessage(value, true);
+            proceedToNextStep();
+        }
+
+        function handleTextInput(value, field, validate, errorDiv) {
+            const error = validate ? validate(value) : '';
+            if (error) {
+                errorDiv.textContent = error;
+                return;
+            }
+            clearReminderTimeout();
+            state.data[field] = value;
+            addUserMessage(value, false);
+            proceedToNextStep();
+        }
+
+        function proceedToNextStep() {
+            if (state.step < steps.length - 1) {
+                setTimeout(() => showStep(state.step + 1), 500);
+            } else {
+                clearReminderTimeout();
+                submitToBackend();
+            }
+        }
+
+        async function submitToBackend() {
+            try {
+                console.log("Sending data to backend:", state.data);
+                const response = await fetch('http://127.0.0.1:8000/submit', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(state.data)
+                });
+                console.log("Response status:", response.status);
+                const result = await response.json();
+                console.log("Backend response:", result);
+                if (result.status === 'success') {
+                    addBotMessage(`Thank you, ${state.data.name}! Our agent will contact you soon to list your property in ${state.data.city}. 🙌`);
+                    addBotMessage(`
+                        <div class="online-status">
+                            <span class="online-dot"></span>
+                            <span>Agent Online</span>
+                        </div>
+                        <div class="final-message-container">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40&q=80" alt="Agent" class="agent-image">
+                            <div class="final-message-text">
+                                📞 Our expert agent will call you soon to list your property in ${state.data.city} 🏠 – get started with SquareYards today! ✅
+                            </div>
+                        </div>
+                    `);
+                    chatbotInput.innerHTML = '';
+                } else {
+                    console.error('Backend error:', result);
+                    addBotMessage('Sorry, something went wrong. Please try again. 😔');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                addBotMessage('Error connecting to the server. Please try again later. 😔');
+            }
+        }
+
+        function addBotMessage(htmlContent, className = 'bot-message') {
+            const message = document.createElement('div');
+            message.className = `message ${className}`;
+            message.innerHTML = htmlContent;
+            chatbotBody.appendChild(message);
+            chatbotBody.scrollTop = chatbotBody.scrollHeight;
+        }
+
+        function addUserMessage(text, isSelectedOption = false) {
+            const message = document.createElement('div');
+            message.className = 'message user-message';
+            if (isSelectedOption) {
+                message.classList.add('selected-option');
+            }
+            message.textContent = text;
+            chatbotBody.appendChild(message);
+            chatbotBody.scrollTop = chatbotBody.scrollHeight;
+        }
+    </script>
+</body>
+</html>
