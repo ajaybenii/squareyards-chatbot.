@@ -23,13 +23,14 @@ MONGODB_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 print(f"MONGODB_URI: {MONGODB_URI}")  # Debug log
 
 try:
-    client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)  # 5-second timeout
+    # client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)  # 5-second timeout
+    client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000, tls=True, tlsAllowInvalidCertificates=False)
     # Test the connection
     client.server_info()  # This will raise an error if the connection fails
-    # print("Connected databases:", client.list_database_names())
+    print("Connected databases:", client.list_database_names())
     db = client["squareyards"]
     collection = db["property_listings"]
-    # print("Inserting into Database:", db.name, "Collection:", collection.name)
+    print("Inserting into Database:", db.name, "Collection:", collection.name)
 except Exception as e:
     # print(f"Failed to connect to MongoDB: {str(e)}")
     raise Exception(f"MongoDB connection failed: {str(e)}")
