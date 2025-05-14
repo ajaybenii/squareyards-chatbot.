@@ -37,7 +37,7 @@ try:
         MONGODB_URI,
         server_api=ServerApi("1"),
         tls=True,
-        tlsAllowInvalidCertificates=True,  # Temporarily disable certificate validation
+        tlsCAFile="/app/isrgrootx1.pem",  # Specify the CA file
         connectTimeoutMS=30000,
         socketTimeoutMS=30000,
         maxPoolSize=5,
