@@ -1,5 +1,5 @@
-# Use slim Python image
-FROM python:3.11-slim
+# Use a more complete Python image
+FROM python:3.11
 
 # Set workdir
 WORKDIR /app
@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     gnupg \
     build-essential \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
