@@ -29,14 +29,25 @@ MONGODB_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 print(f"MONGODB_URI: {MONGODB_URI}")  # Debug log
 
 try:
-    client = MongoClient(MONGODB_URI, server_api=ServerApi("1"))
+    client = MongoClient(
+        MONGODB_URI,
+        server_api=ServerApi("1"),
+        tls=True,
+        tlsAllowInvalidCertificates=False,
+        connectTimeoutMS=30000,  # Increase connection timeout
+        socketTimeoutMS=30000,   # Increase socket timeout
+        maxPoolSize=10,          # Limit connection pool size
+        minPoolSize=1,           # Ensure at least one connection
+        maxIdleTimeMS=10000      # Close idle connections after 10 seconds
+    )
+    # Test the connection
+    client.server_info()  # This will raise an error if the connection fails
+    print("MongoDB connection established.")
     db = client["squareyards"]
     collection = db["property_listings"]
-    print("MongoDB connection established.")
 except Exception as e:
     print("MongoDB connection failed:", str(e))
     raise Exception(f"MongoDB connection failed: {str(e)}")
-
 # Pydantic model for request validation
 class PropertyListing(BaseModel):
     userType: str
@@ -62,6 +73,14 @@ async def submit_listing(listing: PropertyListing):
         print("Error inserting document:", str(e))
         raise HTTPException(status_code=500, detail=f"Error saving data: {str(e)}")
 
-@app.get("/")
-async def root():
-    return {"message": "SquareYards Chatbot Backend"}
+@app.get("/debug-ssl")
+def debug_ssl():
+    import ssl
+    import socket
+    context = ssl.create_default_context()
+    try:
+        with socket.create_connection(("ac-ydqinoe-shard-00-00.vwdyi9p.mongodb.net", 27017)) as sock:
+            with context.wrap_socket(sock, server_hostname="ac-ydqinoe-shard-00-00.vwdyi9p.mongodb.net") as ssock:
+                return {"status": "SSL connection successful", "tls_version": ssock.version()}
+    except Exception as e:
+        return {"status": "SSL connection failed", "error": str(e)}
