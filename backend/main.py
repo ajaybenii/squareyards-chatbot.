@@ -13,7 +13,7 @@ app = FastAPI()
 # CORS setup
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://squareyards-frontend.onrender.com","https://squareyards-chatbot-1.onrender.com"],  # Replace with frontend origin in production
+    allow_origins=["*"],  # Replace with frontend origin in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
